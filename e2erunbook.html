@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>GA4 → Server GTM → Azure Databricks Runbook</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2rem; background: #f9f9f9; color: #333; }
+    h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+    h2 { color: #2c3e50; margin-top: 2rem; }
+    h3 { color: #34495e; margin-top: 1rem; }
+    p, li { font-size: 15px; line-height: 1.6; }
+    ul { margin-bottom: 1rem; }
+    code, pre { background: #f4f4f4; padding: 5px; border-radius: 4px; }
+    .check { color: green; font-weight: bold; }
+    .diagram { text-align: center; margin: 1.5rem 0; }
+  </style>
+</head>
+<body>
+  <h1>📘 Runbook: GA4 → Server GTM → Azure Databricks</h1>
+
+  <h2>Architecture Overview</h2>
+  <p>The following diagram illustrates the end-to-end data flow:</p>
+  <div class="diagram">
+    <img src="https://raw.githubusercontent.com/OpenAI/gpt-diagrams/main/GA4_to_Azure_EndToEnd_example.png" 
+         alt="Architecture Diagram" width="700">
+  </div>
+  <p><b>Data Flow:</b> Browser → analytics.beyondscreen.online (sGTM) → GA4 + Azure Function → Event Hub → ADLS → Databricks</p>
+
+  <h2>1. Website Setup</h2>
+  <ul>
+    <li class="check">Host website on GitHub Pages (<code>prasoot.github.io</code>).</li>
+    <li class="check">Register custom domain in GoDaddy (<code>beyondscreen.online</code>).</li>
+    <li class="check">Configure GoDaddy DNS:<br>- www.beyondscreen.online → CNAME → prasoot.github.io<br>- Optional root ANAME/ALIAS → GitHub’s IPs.</li>
+    <li class="check">Add GTM container snippet to &lt;head&gt; and &lt;body&gt;.</li>
+    <li class="check">Remove direct gtag.js GA snippet (avoid duplicate hits).</li>
+  </ul>
+
+  <h2>2. GTM Web Container</h2>
+  <ul>
+    <li class="check">Create GA4 Configuration Tag (Measurement ID: G-L70NLL6EC4).</li>
+    <li class="check">Set <code>transport_url = https://analytics.beyondscreen.online</code>.</li>
+    <li class="check">Create GA4 Event Tags linked to this Config Tag.</li>
+    <li class="check">Publish and verify in DevTools → network → collect.</li>
+  </ul>
+
+  <h2>3. GoDaddy DNS for sGTM</h2>
+  <ul>
+    <li class="check">Create subdomain: analytics.beyondscreen.online → CNAME ghs.googlehosted.com.</li>
+    <li class="check">Map custom domain in Cloud Run and wait for SSL.</li>
+    <li class="check">Verify health check: <code>https://analytics.beyondscreen.online/__gtmhealthz → 200 OK</code>.</li>
+  </ul>
+
+  <h2>4. sGTM Server Container (Cloud Run)</h2>
+  <ul>
+    <li class="check">Deploy server container. Add GA4 (Web) client.</li>
+    <li class="check">Add GA4 Forwarder Tag and Azure Forwarder Tag (HTTP POST to Azure Function URL).</li>
+  </ul>
+  <pre><code>{
+  "ts":"{{Event Timestamp Micros}}",
+  "client_id":"{{Client ID}}",
+  "session_id":"{{Session ID}}",
+  "event_name":"{{Event Name}}",
+  "params": {{EV - event_params}}
+}</code></pre>
+
+  <h2>5. Azure Function</h2>
+  <ul>
+    <li class="check">Create Function App → Python 3.10 → Consumption plan.</li>
+    <li class="check">Add HTTP Trigger function (<code>ingest</code>).</li>
+    <li class="check">Code parses GA4 JSON and forwards to Event Hub.</li>
+  </ul>
+  <pre><code>from azure.eventhub import EventHubProducerClient, EventData
+import os, logging, json, azure.functions as func
+
+producer = EventHubProducerClient.from_connection_string(
+    os.environ["EH_CONN"], eventhub_name=os.environ["EH_NAME"]
+)
+
+def main(req: func.HttpRequest) -> func.HttpResponse:
+    body = req.get_body().decode("utf-8")
+    try:
+        data = json.loads(body)
+        batch = producer.create_batch()
+        batch.add(EventData(body))
+        producer.send_batch(batch)
+        return func.HttpResponse(status_code=204)
+    except Exception as e:
+        logging.error(f"Parse error: {body[:200]}")
+        return func.HttpResponse(status_code=202)</code></pre>
+
+  <h2>6. Azure Event Hub</h2>
+  <ul>
+    <li class="check">Create Event Hub namespace (<code>ga4-hub-ns</code>).</li>
+    <li class="check">Create Event Hub (<code>ga4-events</code>).</li>
+    <li class="check">Enable Capture → ADLS Gen2 (Avro/Parquet).</li>
+    <li class="check">Verify metrics → “Incoming Messages” increasing.</li>
+  </ul>
+
+  <h2>7. ADLS Gen2</h2>
+  <ul>
+    <li class="check">Create storage account with hierarchical namespace.</li>
+    <li class="check">Create container <code>ga4-raw</code>.</li>
+    <li class="check">Event Hub Capture writes Avro/Parquet files here.</li>
+  </ul>
+
+  <h2>8. Azure Databricks</h2>
+  <ul>
+    <li class="check">Create workspace and mount ADLS Gen2.</li>
+    <li class="check">Ingest via Autoloader:</li>
+  </ul>
+  <pre><code>df = (spark.readStream.format("cloudFiles")
+      .option("cloudFiles.format", "avro")
+      .load("abfss://ga4-raw@&lt;storageaccount&gt;.dfs.core.windows.net/"))
+df.writeStream.format("delta").option("checkpointLocation", "/mnt/checkpoints/ga4")\\
+   .table("ga4_bronze_events")</code></pre>
+
+  <h2>9. Validation</h2>
+  <ul>
+    <li class="check">Browser DevTools → only analytics.beyondscreen.online.</li>
+    <li class="check">sGTM Preview → GA4 + Azure forwarders firing.</li>
+    <li class="check">Azure Function logs → GA4 ingest function triggered.</li>
+    <li class="check">Event Hub metrics increasing.</li>
+    <li class="check">ADLS → new files arriving.</li>
+    <li class="check">Databricks → row counts increasing.</li>
+  </ul>
+
+  <h2>✅ End State</h2>
+  <p>All GA4 hits go via your <b>first-party domain</b> → sGTM → GA4 + Azure → Event Hub → ADLS → Databricks.<br>
+  You get analytics in GA + raw data in Azure for advanced analysis & ML.</p>
+</body>
+</html>
