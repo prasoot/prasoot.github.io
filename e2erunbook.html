@@ -3,6 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <title>GA4 → Server GTM → Azure Databricks Runbook</title>
+  <!-- Mermaid CDN -->
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+    mermaid.initialize({ startOnLoad: true });
+  </script>
   <style>
     body { font-family: Arial, sans-serif; margin: 2rem; background: #f9f9f9; color: #333; }
     h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
@@ -13,6 +18,10 @@
     code, pre { background: #f4f4f4; padding: 5px; border-radius: 4px; }
     .check { color: green; font-weight: bold; }
     .diagram { text-align: center; margin: 1.5rem 0; }
+    .mermaid text {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
   </style>
 </head>
 <body>
@@ -20,10 +29,27 @@
 
   <h2>Architecture Overview</h2>
   <p>The following diagram illustrates the end-to-end data flow:</p>
-  <div class="diagram">
+  <!--<div class="diagram">
     <img src="GADatatoAzureEndToEnd.png" 
          alt="Architecture Diagram" width="1400">
   </div>
+-->
+<div class="mermaid">
+    sequenceDiagram
+      participant U as User<br/>Browser
+      participant W as GTM Web<br/>Container
+      participant S as sGTM Server<br/>Container
+      participant AF as Azure<br/>Function
+      participant EH as Event Hub
+      participant D as Databricks
+
+      U->>W: Page Load<br/>fires GA4 Config Tag
+      W->>S: Send page_view<br/>via transport_url
+      S->>AF: Forward event<br/>as JSON
+      AF->>EH: Push to Event Hub
+      EH->>D: Capture → Delta Tables
+  </div>
+
   <p><b>Data Flow:</b> Browser → analytics.beyondscreen.online (sGTM) → GA4 + Azure Function → Event Hub → ADLS → Databricks</p>
 
   <h2>1. Website Setup</h2>
