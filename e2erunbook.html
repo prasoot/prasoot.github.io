@@ -29,7 +29,25 @@
 
   <h2>Architecture Overview</h2>
   <p>The following diagram illustrates the end-to-end data flow:</p>
-  
+    <div class="mermaid">
+    flowchart LR
+      U["User<br/>Browser"]
+      W["GTM Web Container<br/>Fires GA4 Config Tag"]
+      S["sGTM Server Container<br/>Receives events via transport_url"]
+      GA["Google Analytics<br/>(Reporting)"]
+      AF["Azure Function<br/>HTTP Trigger"]
+      EH["Azure Event Hub<br/>(Capture Enabled)"]
+      ADLS["ADLS Gen2<br/>Raw Event Storage"]
+      DB["Azure Databricks<br/>Autoloader → Delta Tables"]
+
+      U --> W
+      W --> S
+      S --> GA
+      S --> AF
+      AF --> EH
+      EH --> ADLS
+      ADLS --> DB
+  </div>
 <div class="mermaid">
     sequenceDiagram
       participant U as User<br/>Browser
