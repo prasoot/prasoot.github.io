@@ -55,20 +55,21 @@
     <li class="check">Deploy server container. Add GA4 (Web) client.</li>
     <li class="check">Add GA4 Forwarder Tag and Azure Forwarder Tag (HTTP POST to Azure Function URL).</li>
   </ul>
-  <pre><code>{
+ <!--<pre><code>{
   "ts":"{{Event Timestamp Micros}}",
   "client_id":"{{Client ID}}",
   "session_id":"{{Session ID}}",
   "event_name":"{{Event Name}}",
   "params": {{EV - event_params}}
 }</code></pre>
-
+--> 
   <h2>5. Azure Function</h2>
   <ul>
     <li class="check">Create Function App → Python 3.10 → Consumption plan.</li>
     <li class="check">Add HTTP Trigger function (<code>ingest</code>).</li>
     <li class="check">Code parses GA4 JSON and forwards to Event Hub.</li>
   </ul>
+  <!--
   <pre><code>from azure.eventhub import EventHubProducerClient, EventData
 import os, logging, json, azure.functions as func
 
@@ -87,7 +88,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     except Exception as e:
         logging.error(f"Parse error: {body[:200]}")
         return func.HttpResponse(status_code=202)</code></pre>
-
+-->
   <h2>6. Azure Event Hub</h2>
   <ul>
     <li class="check">Create Event Hub namespace (<code>ga4-hub-ns</code>).</li>
@@ -108,12 +109,13 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     <li class="check">Create workspace and mount ADLS Gen2.</li>
     <li class="check">Ingest via Autoloader:</li>
   </ul>
+  <!--
   <pre><code>df = (spark.readStream.format("cloudFiles")
       .option("cloudFiles.format", "avro")
       .load("abfss://ga4-raw@&lt;storageaccount&gt;.dfs.core.windows.net/"))
 df.writeStream.format("delta").option("checkpointLocation", "/mnt/checkpoints/ga4")\\
    .table("ga4_bronze_events")</code></pre>
-
+-->
   <h2>9. Validation</h2>
   <ul>
     <li class="check">Browser DevTools → only analytics.beyondscreen.online.</li>
