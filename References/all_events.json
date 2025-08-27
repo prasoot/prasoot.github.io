@@ -1,0 +1,39 @@
+{
+  "event_name": "{{Event Name}}",
+  "client_id": "{{client_id}}",
+  "session_id": "{{session_id}}",
+  "user_id": "{{user_id}}",
+  "timestamp": "{{Event Timestamp}}",
+
+  "params": {
+    "page_location": "{{page_location}}",
+    "page_referrer": "{{page_referrer}}",
+    "page_title": "{{page_title}}",
+    "engagement_time_msec": "{{engagement_time_msec}}",
+    "screen_resolution": "{{screen_resolution}}",
+    "language": "{{language}}",
+    "user_agent": "{{user_agent}}",
+    "ip_override": "{{ip_override}}",
+
+    "link_url": "{{link_url}}",
+    "link_text": "{{link_text}}",
+    "button_text": "{{button_text}}",
+    "outbound": "{{outbound}}",
+
+    "file_name": "{{file_name}}",
+    "file_extension": "{{file_extension}}",
+
+    "video_url": "{{video_url}}",
+    "video_title": "{{video_title}}",
+    "video_provider": "{{video_provider}}",
+    "video_percent": "{{video_percent}}",
+
+    "search_term": "{{search_term}}",
+
+    "transaction_id": "{{transaction_id}}",
+    "currency": "{{currency}}",
+    "value": "{{value}}",
+
+    "items": "{{items}}"
+  }
+}
