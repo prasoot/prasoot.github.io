@@ -1,41 +1,60 @@
-<table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%; text-align: left;">
-  <thead style="background-color: #f2f2f2;">
-    <tr>
-      <th>Item</th>
-      <th>Azure Function + EventHub + ADLS</th>
-      <th>BigQuery + ADLS</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><strong>Upfront Setup</strong></td>
-      <td>Custom development in Function + GTM</td>
-      <td>Out-of-box GA4 → BigQuery</td>
-    </tr>
-    <tr>
-      <td><strong>Near Real-time</strong></td>
-      <td>Yes (EventHub streaming)</td>
-      <td>No (GA4 → BigQuery export is batch, ~24h delay)</td>
-    </tr>
-    <tr>
-      <td><strong>Cost for ~10M events (~50 GB)</strong></td>
-      <td>$30–60/month</td>
-      <td>$8–10/month</td>
-    </tr>
-    <tr>
-      <td><strong>Vendor Lock-in</strong></td>
-      <td>Azure-native</td>
-      <td>Google-native (plus Azure transfer cost)</td>
-    </tr>
-    <tr>
-      <td><strong>Flexibility</strong></td>
-      <td>High (custom ETL logic possible in Function)</td>
-      <td>Limited (raw GA schema only)</td>
-    </tr>
-    <tr>
-      <td><strong>Latency</strong></td>
-      <td>Seconds</td>
-      <td>Hours (daily batch)</td>
-    </tr>
-  </tbody>
-</table>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cost Comparison: Azure vs BigQuery Solutions</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      background-color: #f9fafb;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 30px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      background-color: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 12px 15px;
+      text-align: left;
+    }
+    th {
+      background-color: #34495e;
+      color: #fff;
+    }
+    tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+    tr:hover {
+      background-color: #eaf2f8;
+    }
+    td:first-child {
+      font-weight: bold;
+      color: #2c3e50;
+      width: 20%;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Cost Comparison of Data Pipeline Solutions</h1>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Item</th>
+        <th>Azure Function + EventHub + ADLS</th>
+        <th>BigQuery + ADLS</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Upfront Setup</
