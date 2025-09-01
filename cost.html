@@ -1,0 +1,41 @@
+<table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%; text-align: left;">
+  <thead style="background-color: #f2f2f2;">
+    <tr>
+      <th>Item</th>
+      <th>Azure Function + EventHub + ADLS</th>
+      <th>BigQuery + ADLS</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Upfront Setup</strong></td>
+      <td>Custom development in Function + GTM</td>
+      <td>Out-of-box GA4 → BigQuery</td>
+    </tr>
+    <tr>
+      <td><strong>Near Real-time</strong></td>
+      <td>Yes (EventHub streaming)</td>
+      <td>No (GA4 → BigQuery export is batch, ~24h delay)</td>
+    </tr>
+    <tr>
+      <td><strong>Cost for ~10M events (~50 GB)</strong></td>
+      <td>$30–60/month</td>
+      <td>$8–10/month</td>
+    </tr>
+    <tr>
+      <td><strong>Vendor Lock-in</strong></td>
+      <td>Azure-native</td>
+      <td>Google-native (plus Azure transfer cost)</td>
+    </tr>
+    <tr>
+      <td><strong>Flexibility</strong></td>
+      <td>High (custom ETL logic possible in Function)</td>
+      <td>Limited (raw GA schema only)</td>
+    </tr>
+    <tr>
+      <td><strong>Latency</strong></td>
+      <td>Seconds</td>
+      <td>Hours (daily batch)</td>
+    </tr>
+  </tbody>
+</table>
