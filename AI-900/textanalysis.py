@@ -31,17 +31,15 @@ def sample_extractive_summarization(client):
     ) 
 
 
- #  document = [
- #        "The extractive summarization feature uses natural language processing techniques to locate key sentences in an unstructured text document. "
- #       "These sentences collectively convey the main idea of the document. This feature is provided as an API for developers. " 
- #       "They can use it to build intelligent solutions based on the relevant information extracted to support various use cases. "
- #       "Extractive summarization supports several languages. It is based on pretrained multilingual transformer models, part of our quest for holistic representations. "
- #       "It draws its strength from transfer learning across monolingual and harness the shared nature of languages to produce models of improved quality and efficiency. "
- #   ]
-
     document = [
-        "Unit 4 of 7, Azure Language MCP. An AI agent uses tools and models to perform tasks such as reasoning, planning, retrieval, and calling external services. While AI agents can use various generative AI models to perform the language-related tasks, you can create an agent that uses Azure Foundry and Foundry tools to ensure consistent and predictable text analysis functionality. The Azure Language MCP server in Foundry tool is a managed service that exposes Azure language capabilities through the model context protocol so that AI agents can use advanced language processing tools without custom integration work. MCP. An MCP server gives an agent access to the tools, data, or action that the agent cannot do on its own. The agent can make a request to the MCP server. The MCP server might respond by providing the data, for example, files or calls for analytics, taking the actions, for example, sending an email. You can access the Azure Language MCP servers and other Foundry tools in the new Foundry portal, Azure Language in the Foundry tool, Azure Language in the Foundry capabilities. MCP server enables AI agents to seamlessly access the capabilities of Azure Language in Foundry tools through the standardized MCP endpoints to achieve more accurate, explainable, and compliant outcomes with PII, redaction, language detection, custom question answering, and more."        
+       "The extractive summarization feature uses natural language processing techniques to locate key sentences in an unstructured text document. "
+        "These sentences collectively convey the main idea of the document. This feature is provided as an API for developers. " 
+        "They can use it to build intelligent solutions based on the relevant information extracted to support various use cases. "
+        "Extractive summarization supports several languages. It is based on pretrained multilingual transformer models, part of our quest for holistic representations. "
+        "It draws its strength from transfer learning across monolingual and harness the shared nature of languages to produce models of improved quality and efficiency. "
     ]
+
+    
 
     poller = client.begin_analyze_actions(
         document,
