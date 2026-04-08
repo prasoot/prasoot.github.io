@@ -4,8 +4,10 @@ import os
 # This example requires environment variables named "AZURE_AI_KEY" and "ENDPOINT_TO_CALL_LANGUAGE_API"
 AZURE_AI_KEY = "4YS1VpSJFke68rznAluZbWyBa2DtLFSc5g53vmGPHbZk8C48Md8kJQQJ99CDACHYHv6XJ3w3AAAAACOGuD0C"
 ENDPOINT_TO_CALL_LANGUAGE_API ="https://ai-tripathiprasoon9917ai730173429272.openai.azure.com/"
-key = os.environ.get('AZURE_AI_KEY')
-endpoint = os.environ.get('ENDPOINT_TO_CALL_LANGUAGE_API')
+#key = os.environ.get('AZURE_AI_KEY')
+#endpoint = os.environ.get('ENDPOINT_TO_CALL_LANGUAGE_API')
+key = AZURE_AI_KEY
+endpoint = ENDPOINT_TO_CALL_LANGUAGE_API
 
 from azure.ai.textanalytics import TextAnalyticsClient
 from azure.core.credentials import AzureKeyCredential
