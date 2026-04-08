@@ -19,7 +19,7 @@ def authenticate_client():
     return text_analytics_client
 
 client = authenticate_client()
-#Example  1: Extractive summarization
+#Example  2: Extractive summarization
 # Example method for summarizing text
 def sample_extractive_summarization(client):
     from azure.core.credentials import AzureKeyCredential
