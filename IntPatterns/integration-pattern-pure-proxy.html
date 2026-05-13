@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Integration Patterns — Pattern 01: Pure Proxy</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:         #0b0f1a;
+    --surface:    #111827;
+    --surface2:   #1a2233;
+    --border:     #1e2d45;
+    --accent:     #0ea5e9;
+    --accent2:    #38bdf8;
+    --green:      #22d3a5;
+    --yellow:     #f59e0b;
+    --text:       #e2e8f0;
+    --muted:      #64748b;
+    --tag-bg:     #0f2033;
+  }
+
+  body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 48px 32px;
+  }
+
+  /* ── Header ── */
+  .header {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    margin-bottom: 40px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 32px;
+  }
+  .pattern-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .12em;
+    background: var(--tag-bg);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 4px 10px;
+    border-radius: 3px;
+    white-space: nowrap;
+    margin-top: 4px;
+  }
+  .header-text h1 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+    color: #fff;
+  }
+  .header-text p {
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.6;
+    max-width: 680px;
+  }
+
+  /* ── Tag row ── */
+  .tags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 40px;
+  }
+  .tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .08em;
+    padding: 3px 10px;
+    border-radius: 2px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    background: var(--surface);
+  }
+  .tag.green  { border-color: #134e3c; color: var(--green);  background: #091f17; }
+  .tag.yellow { border-color: #4a3000; color: var(--yellow); background: #1c1200; }
+  .tag.blue   { border-color: #0c2d45; color: var(--accent); background: var(--tag-bg); }
+
+  /* ── Main diagram card ── */
+  .diagram-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 48px 32px 40px;
+    margin-bottom: 32px;
+    position: relative;
+    overflow: hidden;
+  }
+  .diagram-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--green), transparent);
+  }
+
+  /* ── Flow row ── */
+  .flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 48px;
+    flex-wrap: wrap;
+    row-gap: 24px;
+  }
+
+  /* ── Node ── */
+  .node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    min-width: 120px;
+  }
+  .node-icon {
+    width: 72px; height: 72px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .node-icon svg { width: 32px; height: 32px; }
+  .node-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: .02em;
+  }
+  .node-sub {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: .06em;
+  }
+
+  /* node colour variants */
+  .node-app-a .node-icon  { background: #0f2235; border: 1.5px solid #1a4a72; box-shadow: 0 0 18px #0ea5e920; }
+  .node-apim  .node-icon  { background: #0c1f15; border: 1.5px solid #1a5c3c; box-shadow: 0 0 18px #22d3a520; }
+  .node-app-b .node-icon  { background: #1f1500; border: 1.5px solid #5c3a00; box-shadow: 0 0 18px #f59e0b20; }
+
+  /* ── Arrow segment ── */
+  .arrow-seg {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+    min-width: 90px;
+    max-width: 180px;
+    position: relative;
+  }
+  .arrow-line {
+    width: 100%;
+    height: 2px;
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .arrow-line.req  { background: linear-gradient(90deg, transparent 4px, var(--accent) 4px, var(--accent) calc(100% - 10px), transparent calc(100% - 10px)); }
+  .arrow-line.resp { background: linear-gradient(90deg, transparent 4px, var(--green) 4px, var(--green) calc(100% - 10px), transparent calc(100% - 10px)); }
+  .arrow-head {
+    position: absolute; right: 0;
+    width: 0; height: 0;
+  }
+  .arrow-head.req  { border-top: 5px solid transparent; border-bottom: 5px solid transparent; border-left: 10px solid var(--accent); }
+  .arrow-head.resp { border-top: 5px solid transparent; border-bottom: 5px solid transparent; border-left: 10px solid var(--green); }
+
+  .arrow-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: .07em;
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+  .arrow-label.req  { color: var(--accent2); background: #061524; border: 1px solid #0c2d45; }
+  .arrow-label.resp { color: var(--green);   background: #031510; border: 1px solid #0c3326; }
+
+  /* ── Return arrow row (below) ── */
+  .return-flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin-top: -28px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    row-gap: 16px;
+  }
+  .return-spacer { min-width: 120px; }
+
+  /* ── Sequence steps ── */
+  .steps-title {
+    font-size: 11px;
+    font-family: 'IBM Plex Mono', monospace;
+    letter-spacing: .12em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    margin-top: 8px;
+  }
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+  }
+  .step {
+    display: flex;
+    gap: 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+    align-items: flex-start;
+    transition: border-color .2s;
+  }
+  .step:hover { border-color: var(--accent); }
+  .step-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    min-width: 22px;
+  }
+  .step-body strong {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 3px;
+    color: #fff;
+  }
+  .step-body p {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* ── Two-column details ── */
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 32px;
+  }
+  @media (max-width: 680px) { .detail-grid { grid-template-columns: 1fr; } }
+
+  .detail-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+  }
+  .detail-card h3 {
+    font-size: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+  .detail-card ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .detail-card li {
+    font-size: 13px;
+    color: var(--text);
+    padding-left: 16px;
+    position: relative;
+    line-height: 1.5;
+  }
+  .detail-card li::before {
+    content: '▸';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-size: 10px;
+    top: 2px;
+  }
+  .detail-card.cons li::before { color: #ef4444; }
+  .detail-card.pros li::before { color: var(--green); }
+
+  /* ── APIM functions ── */
+  .apim-funcs {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    margin-bottom: 32px;
+  }
+  .apim-funcs h3 {
+    font-size: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+  .func-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 10px;
+  }
+  .func-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-size: 12px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .func-item span {
+    font-size: 15px;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    border-top: 1px solid var(--border);
+    padding-top: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .footer-left {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .footer-right {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    gap: 16px;
+  }
+  .collection-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: .1em;
+    color: var(--accent);
+    text-transform: uppercase;
+    background: var(--tag-bg);
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    padding: 3px 8px;
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="pattern-badge">PATTERN 01</div>
+  <div class="header-text">
+    <h1>Pure Proxy</h1>
+    <p>App A invokes App B's synchronous API through APIM, which acts as a transparent pass-through layer — forwarding the request unchanged and returning the response to the caller without any transformation or orchestration.</p>
+  </div>
+</div>
+
+<!-- Tags -->
+<div class="tags">
+  <span class="tag blue">Synchronous</span>
+  <span class="tag green">Request / Response</span>
+  <span class="tag green">Real-time</span>
+  <span class="tag yellow">Low Latency</span>
+  <span class="tag">No Transformation</span>
+  <span class="tag">Pass-through</span>
+  <span class="tag">REST / HTTPS</span>
+</div>
+
+<!-- Main diagram -->
+<div class="diagram-card">
+
+  <!-- Request flow (top) -->
+  <div class="flow">
+
+    <!-- App A -->
+    <div class="node node-app-a">
+      <div class="node-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2"/>
+          <path d="M8 21h8M12 17v4"/>
+          <path d="M7 8h.01M10 8h4"/>
+        </svg>
+      </div>
+      <div class="node-label">App A</div>
+      <div class="node-sub">CONSUMER</div>
+    </div>
+
+    <!-- Arrow A→APIM request -->
+    <div class="arrow-seg">
+      <div class="arrow-label req">HTTP REQUEST</div>
+      <div class="arrow-line req"><div class="arrow-head req"></div></div>
+    </div>
+
+    <!-- APIM -->
+    <div class="node node-apim">
+      <div class="node-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#22d3a5" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+          <path d="M4.93 4.93l2.12 2.12M16.95 16.95l2.12 2.12M4.93 19.07l2.12-2.12M16.95 7.05l2.12-2.12"/>
+        </svg>
+      </div>
+      <div class="node-label">APIM</div>
+      <div class="node-sub">PURE PROXY</div>
+    </div>
+
+    <!-- Arrow APIM→App B request -->
+    <div class="arrow-seg">
+      <div class="arrow-label req">HTTP REQUEST</div>
+      <div class="arrow-line req"><div class="arrow-head req"></div></div>
+    </div>
+
+    <!-- App B -->
+    <div class="node node-app-b">
+      <div class="node-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="2" width="20" height="20" rx="2"/>
+          <path d="M7 12h10M7 8h6M7 16h8"/>
+        </svg>
+      </div>
+      <div class="node-label">App B</div>
+      <div class="node-sub">PROVIDER</div>
+    </div>
+
+  </div><!-- /flow -->
+
+  <!-- Response flow (below) -->
+  <div class="return-flow">
+
+    <!-- App A spacer -->
+    <div class="return-spacer"></div>
+
+    <!-- Arrow APIM←App B response -->
+    <div class="arrow-seg" style="transform: scaleX(-1);">
+      <div class="arrow-label resp" style="transform: scaleX(-1);">HTTP RESPONSE</div>
+      <div class="arrow-line resp"><div class="arrow-head resp"></div></div>
+    </div>
+
+    <!-- APIM spacer -->
+    <div class="return-spacer"></div>
+
+    <!-- Arrow A←APIM response -->
+    <div class="arrow-seg" style="transform: scaleX(-1);">
+      <div class="arrow-label resp" style="transform: scaleX(-1);">HTTP RESPONSE</div>
+      <div class="arrow-line resp"><div class="arrow-head resp"></div></div>
+    </div>
+
+    <!-- App B spacer -->
+    <div class="return-spacer"></div>
+
+  </div><!-- /return-flow -->
+
+  <!-- Sequence steps -->
+  <div class="steps-title">// SEQUENCE</div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">01</div>
+      <div class="step-body">
+        <strong>App A sends HTTP Request</strong>
+        <p>Consumer calls the APIM endpoint with payload and auth headers (e.g. API Key / OAuth token).</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <div class="step-body">
+        <strong>APIM Applies Gateway Policies</strong>
+        <p>Authentication, rate limiting, logging and quota checks execute — no payload transformation.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <div class="step-body">
+        <strong>APIM Forwards to App B</strong>
+        <p>Request is proxied as-is to the backend. APIM may inject backend credentials transparently.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">04</div>
+      <div class="step-body">
+        <strong>App B Returns Response</strong>
+        <p>Backend processes the call and sends back the HTTP response synchronously.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">05</div>
+      <div class="step-body">
+        <strong>APIM Relays Response</strong>
+        <p>Response is passed back to App A unchanged. APIM logs the completed transaction and status code.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">06</div>
+      <div class="step-body">
+        <strong>App A Receives Result</strong>
+        <p>Consumer processes the synchronous response. Total round-trip stays within SLA timeout window.</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /diagram-card -->
+
+<!-- APIM responsibilities -->
+<div class="apim-funcs">
+  <h3>// APIM Gateway Responsibilities in Pure Proxy</h3>
+  <div class="func-grid">
+    <div class="func-item"><span>🔑</span> Auth &amp; API Key Validation</div>
+    <div class="func-item"><span>⏱</span> Rate Limiting &amp; Throttling</div>
+    <div class="func-item"><span>📋</span> Request / Response Logging</div>
+    <div class="func-item"><span>🛡</span> TLS Termination &amp; mTLS</div>
+    <div class="func-item"><span>📊</span> Quota &amp; Usage Analytics</div>
+    <div class="func-item"><span>🔁</span> Backend URL Routing</div>
+    <div class="func-item"><span>🩺</span> Health Check &amp; Circuit Breaker</div>
+    <div class="func-item"><span>🪪</span> Consumer Identity Abstraction</div>
+  </div>
+</div>
+
+<!-- Pros / Cons -->
+<div class="detail-grid">
+  <div class="detail-card pros">
+    <h3>// When to Use</h3>
+    <ul>
+      <li>Backend API contract is already standardised — no mapping needed</li>
+      <li>Latency is critical; transformation overhead is unacceptable</li>
+      <li>Centralised security enforcement without touching App B</li>
+      <li>Simple API exposure to external consumers or partners</li>
+      <li>Rapid on-boarding of existing internal services to a managed gateway</li>
+    </ul>
+  </div>
+  <div class="detail-card cons">
+    <h3>// Constraints &amp; Considerations</h3>
+    <ul>
+      <li>No payload mapping — consumer must understand App B's schema</li>
+      <li>APIM becomes a single point of failure; HA config is mandatory</li>
+      <li>Synchronous coupling — App A blocks until App B responds</li>
+      <li>Backend changes directly impact consumers (no contract buffer)</li>
+      <li>Not suitable for long-running or fire-and-forget workloads</li>
+    </ul>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <div class="footer-left">
+    <span class="collection-label">Enterprise Integration Patterns</span>
+  </div>
+  <div class="footer-right">
+    <span>PATTERN 01 / PURE PROXY</span>
+    <span>·</span>
+    <span>REV 1.0</span>
+  </div>
+</div>
+
+</body>
+</html>
